@@ -361,14 +361,18 @@ class FirebaseChatCore {
 
   /// Updates a message in the Firestore. Accepts any message and a
   /// room ID. Message will probably be taken from the [messages] stream.
-  void updateMessage(types.Message message, String roomId) async {
-    if (firebaseUser == null) return;
-    if (message.author.id != firebaseUser!.uid) return;
+  void updateMessage(types.Message message, String roomId, {
+    types.User? author
+  }) async {
+    var sendAuthor = author != null ? types.User(id: firebaseUser!.uid) : author;
+
+   // if (firebaseUser == null) return;
+    if (message.author.id != sendAuthor!.id) return;
 
     final messageMap = message.toJson();
     messageMap.removeWhere(
         (key, value) => key == 'author' || key == 'createdAt' || key == 'id');
-    messageMap['authorId'] = message.author.id;
+    messageMap['authorId'] = author.id;
     messageMap['updatedAt'] = FieldValue.serverTimestamp();
 
     await getFirebaseFirestore()
