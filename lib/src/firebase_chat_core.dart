@@ -312,44 +312,44 @@ class FirebaseChatCore {
   /// Sends a message to the Firestore. Accepts any partial message and a
   /// room ID. If arbitraty data is provided in the [partialMessage]
   /// does nothing.
-  void sendMessage(dynamic partialMessage, String roomId, {
-    types.User? author
-  }) async {
+  void sendMessage(dynamic partialMessage, String roomId,
+      {types.User? author}) async {
     if (firebaseUser == null) return;
 
     types.Message? message;
-    var sendAuthor = author != null ? types.User(id: firebaseUser!.uid) : author;
+    var sendAuthor =
+        author != null ? types.User(id: firebaseUser!.uid) : author;
 
     if (partialMessage is types.PartialCustom) {
       message = types.CustomMessage.fromPartial(
-        author: sendAuthor,
+        author: sendAuthor!,
         id: '',
         partialCustom: partialMessage,
       );
     } else if (partialMessage is types.PartialFile) {
       message = types.FileMessage.fromPartial(
-        author: sendAuthor,
+        author: sendAuthor!,
         id: '',
         partialFile: partialMessage,
       );
     } else if (partialMessage is types.PartialImage) {
       message = types.ImageMessage.fromPartial(
-        author: sendAuthor,
+        author: sendAuthor!,
         id: '',
         partialImage: partialMessage,
       );
     } else if (partialMessage is types.PartialText) {
       message = types.TextMessage.fromPartial(
-        author: sendAuthor,
+        author: sendAuthor!,
         id: '',
         partialText: partialMessage,
       );
     }
 
-    if (message != null) {
+    if (message != null && sendAuthor != null) {
       final messageMap = message.toJson();
       messageMap.removeWhere((key, value) => key == 'author' || key == 'id');
-      messageMap['authorId'] = sendAuthor.id;
+      messageMap['authorId'] = sendAuthor!.id;
       messageMap['createdAt'] = FieldValue.serverTimestamp();
       messageMap['updatedAt'] = FieldValue.serverTimestamp();
 
@@ -361,18 +361,18 @@ class FirebaseChatCore {
 
   /// Updates a message in the Firestore. Accepts any message and a
   /// room ID. Message will probably be taken from the [messages] stream.
-  void updateMessage(types.Message message, String roomId, {
-    types.User? author
-  }) async {
-    var sendAuthor = author != null ? types.User(id: firebaseUser!.uid) : author;
+  void updateMessage(types.Message message, String roomId,
+      {types.User? author}) async {
+    var sendAuthor =
+        author != null ? types.User(id: firebaseUser!.uid) : author;
 
-   // if (firebaseUser == null) return;
+    // if (firebaseUser == null) return;
     if (message.author.id != sendAuthor!.id) return;
 
     final messageMap = message.toJson();
     messageMap.removeWhere(
         (key, value) => key == 'author' || key == 'createdAt' || key == 'id');
-    messageMap['authorId'] = author.id;
+    messageMap['authorId'] = author!.id;
     messageMap['updatedAt'] = FieldValue.serverTimestamp();
 
     await getFirebaseFirestore()
