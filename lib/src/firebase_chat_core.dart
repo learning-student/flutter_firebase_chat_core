@@ -257,9 +257,6 @@ class FirebaseChatCore {
 
   /// Returns a stream of changes in a room from Firebase
   Stream<types.Room> room(String roomId) {
-    final fu = firebaseUser;
-
-    if (fu == null) return const Stream.empty();
 
     return getFirebaseFirestore()
         .collection(config.roomsCollectionName)
@@ -268,9 +265,9 @@ class FirebaseChatCore {
         .asyncMap(
           (doc) => processRoomDocument(
             doc,
-            fu,
             getFirebaseFirestore(),
             config.usersCollectionName,
+            firebaseUser: firebaseUser
           ),
         );
   }
@@ -315,32 +312,31 @@ class FirebaseChatCore {
   void sendMessage(dynamic partialMessage, String roomId, {
     types.User? author
   }) async {
-    if (firebaseUser == null) return;
 
     types.Message? message;
-    var sendAuthor = author != null ? types.User(id: firebaseUser!.uid) : author;
+    var sendAuthor = author == null ? types.User(id: firebaseUser!.uid) : author;
 
     if (partialMessage is types.PartialCustom) {
       message = types.CustomMessage.fromPartial(
-        author: sendAuthor,
+        author: sendAuthor!,
         id: '',
         partialCustom: partialMessage,
       );
     } else if (partialMessage is types.PartialFile) {
       message = types.FileMessage.fromPartial(
-        author: sendAuthor,
+        author: sendAuthor!,
         id: '',
         partialFile: partialMessage,
       );
     } else if (partialMessage is types.PartialImage) {
       message = types.ImageMessage.fromPartial(
-        author: sendAuthor,
+        author: sendAuthor!,
         id: '',
         partialImage: partialMessage,
       );
     } else if (partialMessage is types.PartialText) {
       message = types.TextMessage.fromPartial(
-        author: sendAuthor,
+        author: sendAuthor!,
         id: '',
         partialText: partialMessage,
       );
@@ -349,7 +345,7 @@ class FirebaseChatCore {
     if (message != null) {
       final messageMap = message.toJson();
       messageMap.removeWhere((key, value) => key == 'author' || key == 'id');
-      messageMap['authorId'] = sendAuthor.id;
+      messageMap['authorId'] = sendAuthor!.id;
       messageMap['createdAt'] = FieldValue.serverTimestamp();
       messageMap['updatedAt'] = FieldValue.serverTimestamp();
 
@@ -364,7 +360,7 @@ class FirebaseChatCore {
   void updateMessage(types.Message message, String roomId, {
     types.User? author
   }) async {
-    var sendAuthor = author != null ? types.User(id: firebaseUser!.uid) : author;
+    var sendAuthor = author == null ? types.User(id: firebaseUser!.uid) : author;
 
    // if (firebaseUser == null) return;
     if (message.author.id != sendAuthor!.id) return;
@@ -372,7 +368,7 @@ class FirebaseChatCore {
     final messageMap = message.toJson();
     messageMap.removeWhere(
         (key, value) => key == 'author' || key == 'createdAt' || key == 'id');
-    messageMap['authorId'] = author.id;
+    messageMap['authorId'] = author!.id;
     messageMap['updatedAt'] = FieldValue.serverTimestamp();
 
     await getFirebaseFirestore()
