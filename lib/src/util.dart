@@ -47,12 +47,8 @@ Future<List<types.Room>> processRoomsQuery(
   String usersCollectionName,
 ) async {
   final futures = query.docs.map(
-    (doc) => processRoomDocument(
-      doc,
-      instance,
-      usersCollectionName,
-      firebaseUser: firebaseUser
-    ),
+    (doc) => processRoomDocument(doc, instance, usersCollectionName,
+        firebaseUser: firebaseUser),
   );
 
   return await Future.wait(futures);
@@ -62,11 +58,9 @@ Future<List<types.Room>> processRoomsQuery(
 Future<types.Room> processRoomDocument(
   DocumentSnapshot<Map<String, dynamic>> doc,
   FirebaseFirestore instance,
-  String usersCollectionName,
-  {
-    User? firebaseUser,
-  }
-) async {
+  String usersCollectionName, {
+  User? firebaseUser,
+}) async {
   final data = doc.data()!;
 
   data['createdAt'] = data['createdAt']?.millisecondsSinceEpoch;
@@ -92,9 +86,11 @@ Future<types.Room> processRoomDocument(
 
   if (type == types.RoomType.direct.toShortString()) {
     try {
-      final otherUser = firebaseUser != null ?  users.firstWhere(
-        (u) => u['id'] != firebaseUser.uid,
-      ) : users.first;
+      final otherUser = firebaseUser != null
+          ? users.firstWhere(
+              (u) => u['id'] != firebaseUser.uid,
+            )
+          : users.first;
 
       imageUrl = otherUser['imageUrl'] as String?;
       name = '${otherUser['firstName'] ?? ''} ${otherUser['lastName'] ?? ''}'

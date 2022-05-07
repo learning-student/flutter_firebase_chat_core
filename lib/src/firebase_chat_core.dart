@@ -255,20 +255,29 @@ class FirebaseChatCore {
     );
   }
 
-  /// Returns a stream of changes in a room from Firebase
-  Stream<types.Room> room(String roomId) {
+  Future<types.Room?> fetchRoom(String roomId) async {
+    var doc = await getFirebaseFirestore()
+        .collection(config.roomsCollectionName)
+        .doc(roomId)
+        .get();
 
+    return doc.exists
+        ? processRoomDocument(
+            doc, getFirebaseFirestore(), config.usersCollectionName,
+            firebaseUser: firebaseUser)
+        : null;
+  }
+
+  /// Returns a stream of changes in a room from Firebase
+  Stream<types.Room?> room(String roomId) {
     return getFirebaseFirestore()
         .collection(config.roomsCollectionName)
         .doc(roomId)
         .snapshots()
         .asyncMap(
           (doc) => processRoomDocument(
-            doc,
-            getFirebaseFirestore(),
-            config.usersCollectionName,
-            firebaseUser: firebaseUser
-          ),
+              doc, getFirebaseFirestore(), config.usersCollectionName,
+              firebaseUser: firebaseUser),
         );
   }
 
@@ -309,12 +318,11 @@ class FirebaseChatCore {
   /// Sends a message to the Firestore. Accepts any partial message and a
   /// room ID. If arbitraty data is provided in the [partialMessage]
   /// does nothing.
-  void sendMessage(dynamic partialMessage, String roomId, {
-    types.User? author
-  }) async {
-
+  void sendMessage(dynamic partialMessage, String roomId,
+      {types.User? author}) async {
     types.Message? message;
-    var sendAuthor = author == null ? types.User(id: firebaseUser!.uid) : author;
+    var sendAuthor =
+        author == null ? types.User(id: firebaseUser!.uid) : author;
 
     if (partialMessage is types.PartialCustom) {
       message = types.CustomMessage.fromPartial(
@@ -357,12 +365,12 @@ class FirebaseChatCore {
 
   /// Updates a message in the Firestore. Accepts any message and a
   /// room ID. Message will probably be taken from the [messages] stream.
-  void updateMessage(types.Message message, String roomId, {
-    types.User? author
-  }) async {
-    var sendAuthor = author == null ? types.User(id: firebaseUser!.uid) : author;
+  void updateMessage(types.Message message, String roomId,
+      {types.User? author}) async {
+    var sendAuthor =
+        author == null ? types.User(id: firebaseUser!.uid) : author;
 
-   // if (firebaseUser == null) return;
+    // if (firebaseUser == null) return;
     if (message.author.id != sendAuthor!.id) return;
 
     final messageMap = message.toJson();
